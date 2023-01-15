@@ -1,0 +1,27 @@
+[BASIC]
+# Good variable names which should always be accepted, separated by a comma.
+good-names=
+    e,
+
+[DESIGN]
+# Maximum number of arguments for function / method.
+max-args=6
+
+# Minimum number of public methods for a class (see R0903).
+min-public-methods=1
+
+
+[SPELLING]
+# Spelling dictionary name.
+spelling-dict=en_US
+
+# List of comma separated words that should not be checked.
+spelling-ignore-words=
+    Avram,
+    CLI, customizable,
+    iterable,
+    Lubkin,
+    MPL,
+    nox,
+    pyproject,
+    toml

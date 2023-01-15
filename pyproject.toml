@@ -1,0 +1,41 @@
+[build-system]
+requires = ['setuptools >= 65', 'setuptools_scm[toml] >= 6.2']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'bumpdeps'
+description = 'Utility for bumping dependency versions specified in pyproject.toml files'
+authors = [
+    {name = 'Avram Lubkin', email = 'avylove@rockhopper.net'},
+]
+classifiers = [
+    'Programming Language :: Python :: 3',
+    'Development Status :: 4 - Beta',
+    'Environment :: Console',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
+    'Topic :: Software Development',
+]
+dependencies = [
+    'packaging',
+    'requests',
+    'tomlkit',
+]
+dynamic = ['version']
+requires-python = '>3.6'
+license = {text = 'MPLv2.0'}
+readme = 'README.rst'
+keywords = ['bump', 'dependency', 'dependencies', 'versions', 'extras']
+
+[project.scripts]
+bumpdeps = 'bumpdeps:main'
+
+
+[project.urls]
+homepage = 'https://github.com/Rockhopper-Technologies/bumpdeps'
+
+[tool.setuptools]
+py-modules = ['bumpdeps']
+
+[tool.setuptools.dynamic]
+version = {attr = "bumpdeps.__version__"}
