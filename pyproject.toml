@@ -22,7 +22,7 @@ dependencies = [
     'tomlkit',
 ]
 dynamic = ['version']
-requires-python = '>3.6'
+requires-python = '>=3.6'
 license = {text = 'MPLv2.0'}
 readme = 'README.rst'
 keywords = ['bump', 'dependency', 'dependencies', 'versions', 'extras']
@@ -32,7 +32,7 @@ bumpdeps = 'bumpdeps:main'
 
 
 [project.urls]
-homepage = 'https://github.com/Rockhopper-Technologies/bumpdeps'
+Homepage = 'https://github.com/Rockhopper-Technologies/bumpdeps'
 
 [tool.setuptools]
 py-modules = ['bumpdeps']
