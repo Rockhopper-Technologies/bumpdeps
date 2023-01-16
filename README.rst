@@ -1,12 +1,32 @@
+.. start-badges
+
+| |gh_actions| |pypi|
+
+.. |gh_actions| image:: https://img.shields.io/github/actions/workflow/status/Rockhopper-Technologies/bumpdeps/tests.yml?event=push&logo=github-actions&style=plastic
+    :target: https://github.com/Rockhopper-Technologies/bumpdeps/actions/workflows/tests.yml
+    :alt: GitHub Actions Status
+
+.. |pypi| image:: https://img.shields.io/pypi/v/bumpdeps.svg?style=plastic&logo=pypi
+    :alt: PyPI Package latest release
+    :target: https://pypi.python.org/pypi/bumpdeps
+
+
+.. end-badges
+
 
 Overview
 ========
 
-BumpDeps is a utility for bumping dependency versions specified in pyproject.toml files.
-It attempts to adhere to specifications outlined in PEP 440 and PEP 508.
+BumpDeps is a utility for bumping dependency versions specified in `pyproject.toml`_ files.
+It attempts to adhere to specifications outlined in `PEP 440`_ and `PEP 508`_.
 
 BumpDeps can be used as part of a release process or CI workflow to ensure pinned
 dependencies do not become outdated.
+
+
+.. _pyproject.toml: https://pip.pypa.io/en/stable/reference/build-system/pyproject-toml/
+.. _PEP 440: https://peps.python.org/pep-0440/
+.. _PEP 508: https://peps.python.org/pep-0508/
 
 
 Background
