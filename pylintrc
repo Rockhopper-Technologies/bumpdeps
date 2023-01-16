@@ -24,4 +24,5 @@ spelling-ignore-words=
     MPL,
     nox,
     pyproject,
+    readme,
     toml

@@ -10,6 +10,8 @@ Nox configuration file for BumpDeps
 See https://nox.thea.codes/en/stable/config.html
 """
 
+from pathlib import Path
+
 import nox
 import tomli
 
@@ -39,3 +41,12 @@ def flake8(session: nox.Session) -> None:
     """Run Flake8"""
     session.install('flake8')
     session.run('flake8', '--max-line-length', '100', '--benchmark')
+
+
+@nox.session(python=BASE_PYTHON, tags=['lint'])
+def readme(session: nox.Session) -> None:
+    """Check readme"""
+
+    Path('build').mkdir(exist_ok=True)
+    session.install('rst2html', 'Pygments')
+    session.run('rst2html.py', '-v', '--strict', 'README.rst', 'build/README.html', external=True)

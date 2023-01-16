@@ -23,7 +23,7 @@ jobs:
 
       matrix:
         python-version: ['3.11']
-        nox-session: [pylint, flake8]
+        nox-session: [pylint, flake8, readme]
 
     env:
       NOXSESSION: ${{ matrix.nox-session }}
