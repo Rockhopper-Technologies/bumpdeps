@@ -36,7 +36,7 @@ from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 DESCRIPTION = "Utility for bumping dependencies in pyproject.toml files"
 EPILOG = '''\
