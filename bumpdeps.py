@@ -327,7 +327,7 @@ def cli(args=None):
     parser.add_argument('-b', '--base', action='store_true', default=False,
                         help='Update base dependencies, default when no extras are provided')
     parser.add_argument('-n', '--no-base', action='store_true', default=False,
-                        help='Do not update base, for use with --all')
+                        help='Do not update base dependencies, for use with --all')
     parser.add_argument('-i', '--include', metavar='REGEX',
                         help='Only include dependency names matching regex')
     parser.add_argument('-e', '--exclude', metavar='REGEX',

@@ -99,6 +99,14 @@ usage: bumpdeps [-h] [-a] [-b] [-i REGEX] [-e REGEX] [-f FILE] [--dry-run] [--pk
     This is the default when no extras are provided.
     Typically used in combination with specific extras.
 
+| **-n**
+| **--no-base**
+
+    Do not update base dependencies.
+
+    This is intended for use with `--all` when one want to update all optional
+    dependencies without updating the base dependencies.
+
 | **-i REGEX**
 | **--include REGEX**
 
