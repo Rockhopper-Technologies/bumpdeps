@@ -37,7 +37,7 @@ from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 __all__ = 'BumpDeps', 'BumpDepsError', 'main'
 
 DESCRIPTION = "Utility for bumping dependencies in pyproject.toml files"
