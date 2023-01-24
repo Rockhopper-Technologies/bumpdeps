@@ -23,10 +23,29 @@ jobs:
 
       matrix:
         python-version: ['3.11']
-        nox-session: [pylint, flake8, readme]
+        nox-session: [coverage, flake8, pylint, readme]
+        include:
+
+          - python-version: '3.7'
+            nox-session: test
+
+          - python-version: '3.8'
+            nox-session: test
+
+          - python-version: '3.9'
+            nox-session: test
+
+          - python-version: '3.10'
+            nox-session: test
+
+          - python-version: '3.12-dev'
+            nox-session: test
+            nox-python: '3.12'
+            optional: true
 
     env:
       NOXSESSION: ${{ matrix.nox-session }}
+      NOXPYTHON: ${{ matrix.nox-python || matrix.python-version }}
 
     steps:
       - uses: actions/checkout@v3
@@ -40,4 +59,4 @@ jobs:
         run: pip install nox tomli
 
       - name: Run Nox
-        run: nox -v
+        run: nox -v --force-python $NOXPYTHON
