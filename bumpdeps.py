@@ -30,6 +30,7 @@ import sys
 
 import requests
 import tomlkit
+from tomlkit.exceptions import TOMLKitError
 from packaging.requirements import Requirement, InvalidRequirement
 from packaging.specifiers import Specifier, SpecifierSet
 from packaging.utils import canonicalize_name
@@ -37,6 +38,7 @@ from packaging.version import Version
 
 
 __version__ = '0.1.1'
+__all__ = 'BumpDeps', 'BumpDepsError', 'main'
 
 DESCRIPTION = "Utility for bumping dependencies in pyproject.toml files"
 EPILOG = '''\
@@ -74,7 +76,7 @@ def _dump_requirement(req):
     )))
 
 
-class PyPI:  # pylint: disable=too-few-public-methods
+class PyPI:
     """
     Class for accessing package index
     Defaults to PyPI, but works with other compatible indexes
@@ -92,7 +94,13 @@ class PyPI:  # pylint: disable=too-few-public-methods
 
         LOGGER.debug('Querying latest version for %s from %s', package, url)
         response = requests.get(url, headers={'Accept': 'application/json'}, timeout=5)
-        response.raise_for_status()  # Improve error handling later
+
+        try:
+            response.raise_for_status()  # Improve error handling later
+        except requests.HTTPError as e:
+            raise BumpDepsError(
+                f'Unable to query package index for {package}: {e} {response.text}'
+            ) from e
 
         try:
             return response.json()['info']['version']
@@ -100,7 +108,7 @@ class PyPI:  # pylint: disable=too-few-public-methods
             raise BumpDepsError(f'Invalid JSON returned from package index: {e}') from e
         except KeyError as e:
             raise BumpDepsError(
-                f'Unexpected JSON structure returned from package index: {e}'
+                f'Unexpected JSON structure returned from package index: {response.json()}'
             ) from e
 
 
@@ -129,11 +137,14 @@ class BumpDeps:
         updates = {'dependencies': [], 'optional-dependencies': {}}
 
         LOGGER.debug('Loading configuration from %s', self.filepath)
-        with self.filepath.open('r', encoding='utf-8') as config_file:
-            config = tomlkit.load(config_file)
+        try:
+            with self.filepath.open('r', encoding='utf-8') as config_file:
+                config = tomlkit.load(config_file)
+        except (OSError, TOMLKitError) as e:
+            raise BumpDepsError(f'Error loading {self.filepath}: {e}') from e
 
         if 'project' not in config:
-            raise BufferError(f'No project section in file {self.filepath}')
+            raise BumpDepsError(f'No project section in file {self.filepath}')
 
         # Update base dependencies
         if base is True and 'dependencies' in config['project']:
@@ -296,7 +307,7 @@ class BumpDeps:
 
                 resultant_specifiers.append(new)
 
-            else:
+            else:  # pragma: no cover
                 raise BumpDepsError(
                     f"Unexpected operator '{specifier.operator}' in '{specifier}'"
                 )
@@ -315,10 +326,12 @@ def cli(args=None):
                         help='Update all base and extra dependencies')
     parser.add_argument('-b', '--base', action='store_true', default=False,
                         help='Update base dependencies, default when no extras are provided')
+    parser.add_argument('-n', '--no-base', action='store_true', default=False,
+                        help='Do not update base, for use with --all')
     parser.add_argument('-i', '--include', metavar='REGEX',
                         help='Only include dependency names matching regex')
     parser.add_argument('-e', '--exclude', metavar='REGEX',
-                        help='Only include dependency names matching regex')
+                        help='Exclude dependency names matching regex')
     parser.add_argument('-f', '--file', metavar='FILE', type=Path, default=Path('pyproject.toml'),
                         help="Path to TOML file, default: 'pyproject.toml'")
     parser.add_argument('--dry-run', action='store_true', default=False,
@@ -353,19 +366,22 @@ def cli(args=None):
     return options
 
 
-def main():
+def main(args=None):
     """
     Main entry point for CLI
     """
 
-    options = cli()
+    options = cli(args)
     bumper = BumpDeps(options.file, options.pkg_index)
     try:
         updates = bumper.bump(
-            options.base or not options.extras, options.extras or options.all,
-            include=options.include, exclude=options.exclude, dry_run=options.dry_run)
+            (options.base or options.all or not options.extras) and not options.no_base,
+            options.extras or options.all,
+            include=options.include, exclude=options.exclude, dry_run=options.dry_run
+        )
     except BumpDepsError as e:
-        sys.exit(e)
+        LOGGER.error('%s', e)
+        sys.exit(8)
 
     # Notify user of updates
     if updates['dependencies'] or any(updates['optional-dependencies'].values()):
