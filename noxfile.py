@@ -21,6 +21,7 @@ with open('pyproject.toml', 'rb') as toml_file:
     CONFIG = tomli.load(toml_file)
 
 DEPENDENCIES = CONFIG['project']['dependencies']
+TEST_DEPENDENCIES = CONFIG['project']['optional-dependencies']['tests']
 NOX_DEPENDENCIES = ("nox", "tomli")
 
 # Nox options
@@ -32,8 +33,8 @@ nox.options.error_on_missing_interpreters = False
 @nox.session(python=BASE_PYTHON, tags=['lint'])
 def pylint(session: nox.Session) -> None:
     """Run Pylint"""
-    session.install('pylint', 'pyenchant', *NOX_DEPENDENCIES, *DEPENDENCIES)
-    session.run('pylint', 'bumpdeps', 'noxfile.py')
+    session.install('pylint', 'pyenchant', *NOX_DEPENDENCIES, *DEPENDENCIES, *TEST_DEPENDENCIES)
+    session.run('pylint', 'bumpdeps', 'noxfile.py', 'tests')
 
 
 @nox.session(python=BASE_PYTHON, tags=['lint'])
@@ -50,3 +51,19 @@ def readme(session: nox.Session) -> None:
     Path('build').mkdir(exist_ok=True)
     session.install('rst2html', 'Pygments')
     session.run('rst2html.py', '-v', '--strict', 'README.rst', 'build/README.html', external=True)
+
+
+@nox.session(python=['3.7', '3.8', '3.9', '3.10', '3.11'], tags=['test'])
+def test(session: nox.Session) -> None:
+    """Run unit tests"""
+    session.install('.[tests]')
+    session.run('python', '-m', 'unittest', 'discover', '-s', 'tests', *session.posargs)
+
+
+@nox.session(python=BASE_PYTHON, tags=['test'])
+def coverage(session: nox.Session) -> None:
+    """Run unit tests"""
+    session.install('.[tests]', 'coverage[toml]')
+    session.run('coverage', 'erase')
+    session.run('coverage', 'run', '-m', 'unittest', 'discover', '-s', 'tests', *session.posargs)
+    session.run('coverage', 'report')
