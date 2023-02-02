@@ -1,3 +1,10 @@
+..
+  Copyright 2022 - 2023 Avram Lubkin, All Rights Reserved
+
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 .. start-badges
 
 | |gh_actions| |pypi|
@@ -13,6 +20,8 @@
 
 .. end-badges
 
+.. contents::
+   :depth: 2
 
 Overview
 ========
@@ -143,3 +152,126 @@ usage: bumpdeps [-h] [-a] [-b] [-i REGEX] [-e REGEX] [-f FILE] [--dry-run] [--pk
 | **--help**
 
     Show help message and exit
+
+
+Using BumpDeps with GitHub Actions
+==================================
+
+Configure Deploy Key
+--------------------
+
+It is recommended to create a deploy key. This allows CI tests to run on the pull request created.
+If you use the default permissions, the pull request will still be created, but it won't trigger
+CI tests. There are alternative ways to accomplish this. Find more information on this here__.
+
+__ https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
+
+
+1. Create an SSH keypair, leave the passphrase blank.
+
+   .. code:: console
+
+    $ ssh-keygen -t ed25519 -f github_deploy
+
+   This will create two files in the current directory
+
+   - github_deploy
+      The private key
+
+   - github_deploy.pub
+      The public key
+
+2. Add the public key (contents of github_deploy.pub) as a deploy key under repo settings
+
+   **IMPORTANT: check the box for "Allow write access"**
+
+   Instructions for configuring deploy keys can be found here__.
+
+   __ https://docs.github.com/en/developers/overview/managing-deploy-keys#deploy-keys
+
+3. Create a repo secret named PRIVATE_KEY under repo settings with private key
+   (contents of github_deploy) as the value
+
+   Instructions for creating repository secrets can be found here__.
+
+   __ https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository
+
+
+.. _peter-evens/create-pull-request: https://github.com/marketplace/actions/create-pull-request
+
+Example GitHub Actions configuration
+------------------------------------
+
+This example avoids use of third-party actions, however it could be simplified
+by utilizing `peter-evens/create-pull-request`_.
+
+.. code:: yaml
+
+  name: Update Dependencies
+
+  on:
+    schedule:
+      # Every Monday at 1 AM
+      - cron: '0 1 * * 1'
+
+  jobs:
+    Update_Deps:
+
+      runs-on: ubuntu-latest
+      name: ${{ matrix.name || matrix.args }}
+
+      strategy:
+        fail-fast: false
+        matrix:
+          args: [extras_1, extras_2]
+          include:
+
+          - args: '-b'
+            name: Base Dependencies
+
+          - args: '-a -i toml.*'
+            name: All TOML libs
+
+      env:
+        DEPS_UPDATED: false
+
+      steps:
+        - uses: actions/checkout@v3
+          with:
+            ssh-key: ${{ secrets.PRIVATE_KEY }}
+
+        - name: Install latest Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: 3.x
+
+        - name: Install bumpdeps
+          run: pip install bumpdeps
+
+        - name: Update deps
+          run: |
+            set -x
+            bumpdeps ${{ matrix.args }}
+            git diff --quiet || echo "DEPS_UPDATED=true" >> $GITHUB_ENV
+
+        - name: Create PR
+          env:
+            GH_TOKEN: ${{ github.token }}
+          run: |
+            set -x
+            PR_BRANCH=bumpdeps/$(echo ${{ matrix.name || matrix.args }} | tr ' ' _)_${{ github.run_id }}
+            PR_MSG="BumpDeps: ${{ matrix.name || matrix.args }}"
+
+            # Configure Git
+            git config --global user.name "BumpDeps"
+            git config --global user.email "<>"
+
+            # Create commit in new branch
+            git checkout -b $PR_BRANCH
+            git commit -a -m "$PR_MSG"
+            git --no-pager log -n 2
+            git push -u origin $PR_BRANCH
+
+            # Create PR
+            gh pr create -B main -H $PR_BRANCH --title "$PR_MSG" --body "Created by Github Action"
+          if: env.DEPS_UPDATED == 'true'
